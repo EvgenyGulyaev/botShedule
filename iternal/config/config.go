@@ -21,16 +21,16 @@ func LoadConfig() *Config {
 }
 
 func load() *Config {
-	exePath, err := os.Executable()
+	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	rootPath := filepath.Dir(exePath)
-	rootPath = filepath.Join(rootPath, "..", ".env")
+	rootPath := filepath.Join(pwd, ".env")
 
 	err = godotenv.Load(rootPath)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Print(filepath.Join(pwd, ".env"))
+		log.Fatal("Error loading .env file in ", rootPath)
 	}
 	env, err := godotenv.Read(rootPath)
 	if err != nil {

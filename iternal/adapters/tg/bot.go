@@ -1,8 +1,9 @@
-package bot
+package tg
 
 import (
 	"log"
 
+	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
 	"github.com/EvgenyGulyaev/botShedule/pkg/logger"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -10,7 +11,8 @@ import (
 
 // Структура бота
 type Bot struct {
-	bot *tgbotapi.BotAPI
+	bot       *tgbotapi.BotAPI
+	isStarted bool
 }
 
 func GetBot(botToken string) *Bot {
@@ -36,23 +38,31 @@ func initBot(botToken string) (*Bot, error) {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	b := &Bot{bot: bot}
-
-	b.startHandleMessage()
-
 	return b, nil
 }
 
-func (b *Bot) startHandleMessage() {
+func (b *Bot) StartHandleMessage() {
+	if b.isStarted {
+		log.Fatal("Error, Bot is started!")
+	}
+	b.isStarted = true
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates := b.bot.GetUpdatesChan(u)
 
 	for update := range updates {
-		if update.Message != nil { // If we got a message
+		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+			m := &formatter.HandlerMessage{
+				UserName: update.Message.From.UserName,
+				From:     update.Message.Text,
+				ChatId:   update.Message.Chat.ID,
+			}
+
+			msg := tgbotapi.NewMessage(m.GetAnswer())
 			msg.ReplyToMessageID = update.Message.MessageID
 
 			b.bot.Send(msg)

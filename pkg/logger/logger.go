@@ -15,10 +15,6 @@ var instance *Logger
 
 var once sync.Once
 
-func makeLogger(visible bool) *Logger {
-	return &Logger{visible: visible}
-}
-
 func GetLogger() *Logger {
 	once.Do(func() {
 		visible, err := strconv.ParseBool(os.Getenv("LOG_SHOW"))
@@ -34,4 +30,14 @@ func (l *Logger) Printf(format string, v ...any) {
 	if l.visible {
 		log.Printf(format, v...)
 	}
+}
+
+func (l *Logger) Fatal(v ...any) {
+	if l.visible {
+		log.Fatal(v...)
+	}
+}
+
+func makeLogger(visible bool) *Logger {
+	return &Logger{visible: visible}
 }
