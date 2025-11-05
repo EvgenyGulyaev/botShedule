@@ -1,9 +1,10 @@
 package formatter
 
 import (
+	"fmt"
 	"strings"
 
-	usecase "github.com/EvgenyGulyaev/botShedule/iternal/usecase/tgpi"
+	"github.com/EvgenyGulyaev/botShedule/iternal/usecase/tgpi"
 )
 
 type HandlerMessage struct {
@@ -13,16 +14,24 @@ type HandlerMessage struct {
 }
 
 func (m *HandlerMessage) GetAnswer() (int64, string) {
-	tgpi := usecase.InitClient()
+	tgpi := tgpi.InitClientGroup()
 	g := tgpi.GetGroups(m.From)
 
-	return m.ChatId, m.prepareGroups(g)
+	return m.ChatId, m.prepareGroups(&g)
 }
 
-func (m *HandlerMessage) prepareGroups(gs []usecase.El) string {
-	names := make([]string, len(gs))
-	for i, g := range gs {
-		names[i] = "Группа: " + g.Name
+func (m *HandlerMessage) prepareGroups(gs *[]tgpi.El) string {
+	if len(*gs) == 1 {
+		return m.prepareSchedule(&(*gs)[0])
+	}
+
+	names := make([]string, len(*gs))
+	for i, g := range *gs {
+		names[i] = fmt.Sprintf("%s: %s", handleType(&g), g.Name)
 	}
 	return strings.Join(names, ", \n") + "\n"
+}
+
+func (m *HandlerMessage) prepareSchedule(g *tgpi.El) string {
+	return fmt.Sprintf("Расписание для группы: %s", g.Name)
 }

@@ -1,15 +1,14 @@
-package usecase
+package tgpi
 
 import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"strings"
-	"sync"
 	"time"
+
+	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 )
 
 type Client struct {
@@ -22,22 +21,13 @@ type Params struct {
 	Year  int      `json:"year"`
 }
 
-type El struct {
-	ID   int    `json:"id"`
-	Name string `json:"title"`
-}
-
-type elementGroup struct {
-	Aud     []El `json:"aud"`
-	Teacher []El `json:"teacher"`
-	Group   []El `json:"group"`
-}
-
-func InitClient() *Client {
-	return &Client{
-		client: &http.Client{Timeout: 1000 * time.Second},
-		url:    "https://edu.tgpi.ru/query/",
-	}
+func InitClientGroup() *Client {
+	return singleton.GetInstance("client", func() interface{} {
+		return &Client{
+			client: &http.Client{Timeout: 1000 * time.Second},
+			url:    "https://edu.tgpi.ru/query/",
+		}
+	}).(*Client)
 }
 
 func (t *Client) GetGroups(groupName string) (result []El) {
@@ -76,7 +66,7 @@ func (t *Client) getRequest() (req *http.Request, err error) {
 		return
 	}
 
-	req, err = http.NewRequest(http.MethodPost, t.url+"query/", &buf)
+	req, err = http.NewRequest(http.MethodPost, t.url, &buf)
 	if err != nil {
 		return
 	}
@@ -93,46 +83,6 @@ func (t *Client) getRequest() (req *http.Request, err error) {
 	req.Header.Set("Accept-Encoding", "identity")
 
 	return
-}
-
-func filterEl(mask string, el El, sem chan struct{}, wg *sync.WaitGroup, mu *sync.Mutex, results *[]El) {
-	defer wg.Done()
-	defer func() { <-sem }()
-	mu.Lock()
-	if strings.Contains(el.Name, mask) {
-		*results = append(*results, el)
-	}
-	mu.Unlock()
-}
-
-func filter(groupName string, els []El) []El {
-	if groupName == "" {
-		return els
-	}
-
-	var results []El
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	sem := make(chan struct{}, 5) // максимум 5 горутин одновременно
-
-	for _, item := range els {
-		sem <- struct{}{}
-		wg.Add(1)
-		go filterEl(groupName, item, sem, &wg, &mu, &results)
-	}
-
-	wg.Wait()
-	return results
-}
-
-func getResult(bodyBytes []byte) (elements []El) {
-	var elGroup elementGroup
-	err := json.Unmarshal(bodyBytes, &elGroup)
-	if err != nil {
-		fmt.Print(err)
-		return
-	}
-	return append(elGroup.Group, append(elGroup.Aud, elGroup.Teacher...)...)
 }
 
 func getReader(resp *http.Response) (reader io.ReadCloser) {
