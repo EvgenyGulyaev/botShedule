@@ -22,7 +22,7 @@ type Params struct {
 }
 
 func InitClientGroup() *Client {
-	return singleton.GetInstance("client", func() interface{} {
+	return singleton.GetInstance("client-group", func() interface{} {
 		return &Client{
 			client: &http.Client{Timeout: 1000 * time.Second},
 			url:    "https://edu.tgpi.ru/query/",
@@ -31,7 +31,7 @@ func InitClientGroup() *Client {
 }
 
 func (t *Client) GetGroups(groupName string) (result []El) {
-	req, err := t.getRequest()
+	req, err := t.getReqGroup()
 	if err != nil {
 		return
 	}
@@ -47,10 +47,10 @@ func (t *Client) GetGroups(groupName string) (result []El) {
 	if err != nil {
 		return
 	}
-	return filter(groupName, getResult(bodyBytes))
+	return filterGroups(groupName, getGroups(bodyBytes))
 }
 
-func (t *Client) getRequest() (req *http.Request, err error) {
+func (t *Client) getReqGroup() (req *http.Request, err error) {
 	body := Params{
 		Query: []string{
 			"aud",

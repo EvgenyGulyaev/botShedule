@@ -42,7 +42,7 @@ func filterEl(mask string, el El, sem chan struct{}, wg *sync.WaitGroup, mu *syn
 	mu.Unlock()
 }
 
-func filter(groupName string, els []El) []El {
+func filterGroups(groupName string, els []El) []El {
 	if groupName == "" {
 		return els
 	}
@@ -75,7 +75,7 @@ func convert(t *[]ElTeacher) (elements []El) {
 	return
 }
 
-func getResult(bodyBytes []byte) (elements []El) {
+func getGroups(bodyBytes []byte) (elements []El) {
 	var elGroup elementGroup
 	err := json.Unmarshal(bodyBytes, &elGroup)
 	if err != nil {

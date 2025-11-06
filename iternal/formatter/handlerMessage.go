@@ -32,6 +32,10 @@ func (m *HandlerMessage) prepareGroups(gs *[]tgpi.El) string {
 	return strings.Join(names, ", \n") + "\n"
 }
 
-func (m *HandlerMessage) prepareSchedule(g *tgpi.El) string {
-	return fmt.Sprintf("Расписание для группы: %s", g.Name)
+func (m *HandlerMessage) prepareSchedule(el *tgpi.El) string {
+	tgpi := tgpi.InitClientSchedule()
+	g := tgpi.GetSchedule(el)
+	fmt.Print(g)
+
+	return fmt.Sprintf("Расписание для группы: %s", el.Name)
 }
