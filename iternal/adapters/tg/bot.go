@@ -62,7 +62,7 @@ func (b *Bot) StartHandleMessage() {
 				ChatId:   update.Message.Chat.ID,
 			}
 
-			msg := tgbotapi.NewMessage(m.GetAnswer())
+			msg := tgbotapi.NewMessage(m.ChatId, m.GetAnswer())
 			msg.ReplyToMessageID = update.Message.MessageID
 
 			b.bot.Send(msg)

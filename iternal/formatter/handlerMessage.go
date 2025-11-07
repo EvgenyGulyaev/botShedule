@@ -13,11 +13,19 @@ type HandlerMessage struct {
 	ChatId   int64
 }
 
-func (m *HandlerMessage) GetAnswer() (int64, string) {
+func (m *HandlerMessage) GetAnswer() string {
+	c := m.HandlerCommand()
+	if m.HandlerCommand() != "" {
+		return c
+	}
+
 	tgpi := tgpi.InitClientGroup()
 	g := tgpi.GetGroups(m.From)
 
-	return m.ChatId, m.prepareGroups(&g)
+	if len(g) == 0 {
+		return fmt.Sprintf("🎴По вашему запросу: %s Ничего не найдено🎴\n", m.From)
+	}
+	return m.prepareGroups(&g)
 }
 
 func (m *HandlerMessage) prepareGroups(gs *[]tgpi.El) string {
