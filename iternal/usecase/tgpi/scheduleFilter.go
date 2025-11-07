@@ -2,16 +2,17 @@ package tgpi
 
 import (
 	"encoding/json"
-	"fmt"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 type Lesson struct {
-	Time    string
+	Time    int
 	Name    string
 	Place   string
 	Teacher string
+	Type    uint8
 }
 
 type Schedule struct {
@@ -22,7 +23,7 @@ type Schedule struct {
 type rec struct {
 	Subject string `json:"subject"`
 	Aud     string `json:"aud"`
-	Type    int    `json:"type"`
+	Type    uint8  `json:"type"`
 	Teacher []struct {
 		Name string `json:"teacher"`
 	} `json:"teacher"`
@@ -32,13 +33,13 @@ type rec struct {
 type preload struct {
 	Schedule struct {
 		Day []struct {
-			Rec []rec `json:"rec"`
+			Date string `json:"date"`
+			Rec  []rec  `json:"rec"`
 		} `json:"day"`
 	} `json:"schedule"`
 }
 
 func getSchedule(doc *goquery.Document) (result []Schedule) {
-
 	d := doc.Find("body script").Eq(0).Text()
 	data := d[15 : len(d)-18]
 	var s preload
@@ -47,8 +48,29 @@ func getSchedule(doc *goquery.Document) (result []Schedule) {
 		return
 	}
 
-	fmt.Print(s)
-	// TODO: Сделать обработку и приведение к типу Schedule
+	for _, day := range s.Schedule.Day {
+		date := day.Date
+		lessons := []Lesson{}
+		for _, lesson := range day.Rec {
+			teachers := make([]string, len(lesson.Teacher))
+			for i, t := range lesson.Teacher {
+				teachers[i] = t.Name
+			}
+			teacher := strings.Join(teachers, ",")
+
+			for _, l := range lesson.Lesson {
+				lessons = append(lessons, Lesson{
+					Time:    l,
+					Name:    lesson.Subject,
+					Place:   lesson.Aud,
+					Teacher: teacher,
+					Type:    lesson.Type,
+				})
+			}
+
+		}
+		result = append(result, Schedule{Day: date, Lessons: lessons})
+	}
 
 	return
 }

@@ -34,8 +34,12 @@ func (m *HandlerMessage) prepareGroups(gs *[]tgpi.El) string {
 
 func (m *HandlerMessage) prepareSchedule(el *tgpi.El) string {
 	tgpi := tgpi.InitClientSchedule()
-	g := tgpi.GetSchedule(el)
-	fmt.Print(g)
+	gs := tgpi.GetSchedule(el)
 
-	return fmt.Sprintf("Расписание для группы: %s", el.Name)
+	days := make([]string, len(gs))
+	for i, g := range gs {
+		days[i] = m.prepareDay(&g)
+	}
+
+	return fmt.Sprintf("🎴Ваш запрос: %s🎴\n %s", el.Name, strings.Join(days, "\n\n"))
 }
