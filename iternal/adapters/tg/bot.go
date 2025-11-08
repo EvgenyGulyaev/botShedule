@@ -60,10 +60,13 @@ func (b *Bot) StartHandleMessage() {
 				UserName: update.Message.From.UserName,
 				From:     update.Message.Text,
 				ChatId:   update.Message.Chat.ID,
+				Type:     formatter.Tg,
 			}
 
-			msg := tgbotapi.NewMessage(m.ChatId, m.GetAnswer())
+			mes, keys := m.GetAnswer()
+			msg := tgbotapi.NewMessage(m.ChatId, mes)
 			msg.ReplyToMessageID = update.Message.MessageID
+			msg.ReplyMarkup = GetKeyboard(&keys)
 
 			b.bot.Send(msg)
 		}

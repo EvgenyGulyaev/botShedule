@@ -7,37 +7,45 @@ import (
 	"github.com/EvgenyGulyaev/botShedule/iternal/usecase/tgpi"
 )
 
+type TypeBot int
+
+const (
+	Tg TypeBot = iota
+	Vk
+)
+
 type HandlerMessage struct {
 	UserName string
 	From     string
 	ChatId   int64
+	Type     TypeBot
 }
 
-func (m *HandlerMessage) GetAnswer() string {
+func (m *HandlerMessage) GetAnswer() (string, []string) {
 	c := m.HandlerCommand()
 	if m.HandlerCommand() != "" {
-		return c
+		return c, nil
 	}
 
 	tgpi := tgpi.InitClientGroup()
 	g := tgpi.GetGroups(m.From)
 
 	if len(g) == 0 {
-		return fmt.Sprintf("🎴По вашему запросу: %s Ничего не найдено🎴\n", m.From)
+		return fmt.Sprintf("🎴По вашему запросу: %s Ничего не найдено🎴\n", m.From), nil
 	}
 	return m.prepareGroups(&g)
 }
 
-func (m *HandlerMessage) prepareGroups(gs *[]tgpi.El) string {
+func (m *HandlerMessage) prepareGroups(gs *[]tgpi.El) (string, []string) {
 	if len(*gs) == 1 {
-		return m.prepareSchedule(&(*gs)[0])
+		return m.prepareSchedule(&(*gs)[0]), nil
 	}
 
 	names := make([]string, len(*gs))
 	for i, g := range *gs {
-		names[i] = fmt.Sprintf("%s: %s", handleType(&g), g.Name)
+		names[i] = g.Name
 	}
-	return strings.Join(names, ", \n") + "\n"
+	return "⚠️Выберите из предложенных:⚠️", names
 }
 
 func (m *HandlerMessage) prepareSchedule(el *tgpi.El) string {
