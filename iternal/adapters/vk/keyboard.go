@@ -8,7 +8,7 @@ import (
 
 func getKeyboard(buttons *[]string) interface{} {
 	keyboard := object.MessagesKeyboard{
-		OneTime: false, // клавиатура не одноразовая
+		OneTime: true,
 		Buttons: [][]object.MessagesKeyboardButton{},
 	}
 

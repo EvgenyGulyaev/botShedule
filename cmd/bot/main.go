@@ -14,6 +14,6 @@ func main() {
 	go botTg.StartHandleMessage()
 
 	botVk := vk.GetBot(c.Env["VK_BOT_TOKEN"])
-	go botVk.StartHandleMessage()
+	botVk.StartHandleMessage()
 
 }
