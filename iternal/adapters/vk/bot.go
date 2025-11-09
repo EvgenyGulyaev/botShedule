@@ -47,7 +47,7 @@ func initBot(botToken string) (*Bot, error) {
 func (b *Bot) StartHandleMessage() {
 	log := logger.GetLogger()
 	b.bot.MessageNew(func(ctx context.Context, obj events.MessageNewObject) {
-		log.Printf("[%s] %s", obj.Message.FromID, obj.Message.Text)
+		log.Printf("[%d] %s", obj.Message.FromID, obj.Message.Text)
 
 		m := &formatter.HandlerMessage{
 			UserName: b.getUserName(obj.Message.FromID),
