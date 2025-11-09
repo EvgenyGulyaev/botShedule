@@ -4,7 +4,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func GetKeyboard(ks *[]string) interface{} {
+func getKeyboard(ks *[]string) interface{} {
 	if len(*ks) == 0 {
 		return tgbotapi.NewRemoveKeyboard(true)
 	}

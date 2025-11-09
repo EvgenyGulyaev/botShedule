@@ -16,7 +16,7 @@ type Bot struct {
 }
 
 func GetBot(botToken string) *Bot {
-	return singleton.GetInstance("bot", func() interface{} {
+	return singleton.GetInstance("bot-tg", func() interface{} {
 		bot, err := initBot(botToken)
 		if err != nil {
 			log.Fatal("Can't start bot")
@@ -42,6 +42,7 @@ func initBot(botToken string) (*Bot, error) {
 }
 
 func (b *Bot) StartHandleMessage() {
+	log := logger.GetLogger()
 	if b.isStarted {
 		log.Fatal("Error, Bot is started!")
 	}
@@ -66,7 +67,7 @@ func (b *Bot) StartHandleMessage() {
 			mes, keys := m.GetAnswer()
 			msg := tgbotapi.NewMessage(m.ChatId, mes)
 			msg.ReplyToMessageID = update.Message.MessageID
-			msg.ReplyMarkup = GetKeyboard(&keys)
+			msg.ReplyMarkup = getKeyboard(&keys)
 
 			b.bot.Send(msg)
 		}

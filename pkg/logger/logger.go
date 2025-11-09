@@ -38,6 +38,12 @@ func (l *Logger) Fatal(v ...any) {
 	}
 }
 
+func (l *Logger) Fatalf(format string, v ...any) {
+	if l.visible {
+		log.Fatalf(format, v...)
+	}
+}
+
 func makeLogger(visible bool) *Logger {
 	return &Logger{visible: visible}
 }
