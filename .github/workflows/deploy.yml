@@ -39,4 +39,5 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            sudo systemctl restart bot
+            sudo systemctl restart bot && sudo systemctl restart nats
+
