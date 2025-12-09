@@ -7,13 +7,18 @@ import (
 
 func (b *Bot) createMessage(m *formatter.HandlerMessage) *params.MessagesSendBuilder {
 	res, ks := m.GetAnswer()
-	mes := params.NewMessagesSendBuilder()
-	mes.Message(res)
-	mes.RandomID(0)
-	mes.PeerID(int(m.ChatId))
+	mes := b.makeMessage(m.ChatId, res)
 	if len(ks) != 0 {
 		mes.Keyboard(getKeyboard(&ks))
 	}
 
+	return mes
+}
+
+func (b *Bot) makeMessage(chatID int64, message string) *params.MessagesSendBuilder {
+	mes := params.NewMessagesSendBuilder()
+	mes.Message(message)
+	mes.RandomID(0)
+	mes.PeerID(int(chatID))
 	return mes
 }

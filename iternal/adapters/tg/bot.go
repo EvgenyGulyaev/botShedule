@@ -4,12 +4,11 @@ import (
 	"log"
 
 	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
-	"github.com/EvgenyGulyaev/botShedule/pkg/logger"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// Структура бота
+// Bot Структура бота
 type Bot struct {
 	bot       *tgbotapi.BotAPI
 	isStarted bool
@@ -26,8 +25,6 @@ func GetBot(botToken string) *Bot {
 }
 
 func initBot(botToken string) (*Bot, error) {
-	log := logger.GetLogger()
-
 	bot, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		return nil, err
@@ -41,8 +38,15 @@ func initBot(botToken string) (*Bot, error) {
 	return b, nil
 }
 
+func (b *Bot) Publish(chatID int64, message string) {
+	msg := tgbotapi.NewMessage(chatID, message)
+	_, err := b.bot.Send(msg)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (b *Bot) StartHandleMessage() {
-	log := logger.GetLogger()
 	if b.isStarted {
 		log.Fatal("Error, Bot is started!")
 	}
@@ -69,7 +73,10 @@ func (b *Bot) StartHandleMessage() {
 			msg.ReplyToMessageID = update.Message.MessageID
 			msg.ReplyMarkup = getKeyboard(&keys)
 
-			b.bot.Send(msg)
+			_, err := b.bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
-	"github.com/EvgenyGulyaev/botShedule/pkg/logger"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	"github.com/SevereCloud/vksdk/v3/api"
 	"github.com/SevereCloud/vksdk/v3/events"
@@ -45,7 +44,6 @@ func initBot(botToken string) (*Bot, error) {
 }
 
 func (b *Bot) StartHandleMessage() {
-	log := logger.GetLogger()
 	b.bot.MessageNew(func(ctx context.Context, obj events.MessageNewObject) {
 		log.Printf("[%d] %s", obj.Message.FromID, obj.Message.Text)
 
@@ -66,5 +64,13 @@ func (b *Bot) StartHandleMessage() {
 
 	if err := b.bot.Run(); err != nil {
 		log.Fatalf("Long Poll завершился с ошибкой: %s", err)
+	}
+}
+
+func (b *Bot) Publish(chatID int64, message string) {
+	mes := b.makeMessage(chatID, message)
+	_, err := b.api.MessagesSend(mes.Params)
+	if err != nil {
+		log.Println(err)
 	}
 }
