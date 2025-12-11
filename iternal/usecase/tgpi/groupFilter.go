@@ -36,7 +36,7 @@ func filterEl(mask string, el El, sem chan struct{}, wg *sync.WaitGroup, mu *syn
 	defer wg.Done()
 	defer func() { <-sem }()
 	mu.Lock()
-	if strings.Contains(el.Name, mask) {
+	if strings.Contains(strings.ToLower(el.Name), strings.ToLower(mask)) {
 		*results = append(*results, el)
 	}
 	mu.Unlock()
