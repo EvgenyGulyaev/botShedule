@@ -15,7 +15,7 @@ type User struct {
 func (u *User) Publish() bool {
 	b := broker.Get()
 
-	err := Publish[User](b.Nc, "user", *u)
+	err := broker.Publish[User](b.Nc, "user", *u)
 	if err != nil {
 		log.Println(err)
 		return false

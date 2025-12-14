@@ -38,6 +38,14 @@ func newNatsBroker(url string) (*NatsBroker, error) {
 	return &NatsBroker{Nc: nc}, nil
 }
 
+func Publish[T any](nc *nats.Conn, subject string, d T) error {
+	data, err := json.Marshal(d)
+	if err != nil {
+		return err
+	}
+	return nc.Publish(subject, data)
+}
+
 func Subscribe[T any](nc *nats.Conn, subject string, bufferSize int, ctx context.Context) (<-chan T, context.CancelFunc, error) {
 	ch := make(chan T, bufferSize)
 	var once sync.Once // гарантирует вызов Unsubscribe только один раз
