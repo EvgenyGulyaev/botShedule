@@ -1,4 +1,4 @@
-package handlers
+package producer
 
 import (
 	"log"
@@ -13,9 +13,9 @@ type User struct {
 }
 
 func (u *User) Publish() bool {
-	b := Get()
+	b := broker.Get()
 
-	err := broker.Publish[User](b.Nc, "user", *u)
+	err := Publish[User](b.Nc, "user", *u)
 	if err != nil {
 		log.Println(err)
 		return false

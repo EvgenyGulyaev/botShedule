@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
-	"github.com/EvgenyGulyaev/botShedule/iternal/handlers"
+	"github.com/EvgenyGulyaev/botShedule/iternal/handlers/producer"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -61,7 +61,7 @@ func (b *Bot) StartHandleMessage() {
 	for update := range updates {
 		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-			user := handlers.User{Name: update.Message.From.UserName, Id: update.Message.Chat.ID, Net: "tg"}
+			user := producer.User{Name: update.Message.From.UserName, Id: update.Message.Chat.ID, Net: "tg"}
 			go user.Publish()
 
 			m := &formatter.HandlerMessage{

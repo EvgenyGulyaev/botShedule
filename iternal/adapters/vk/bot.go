@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
-	"github.com/EvgenyGulyaev/botShedule/iternal/handlers"
+	"github.com/EvgenyGulyaev/botShedule/iternal/handlers/producer"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	"github.com/SevereCloud/vksdk/v3/api"
 	"github.com/SevereCloud/vksdk/v3/events"
@@ -48,7 +48,7 @@ func (b *Bot) StartHandleMessage() {
 	b.bot.MessageNew(func(ctx context.Context, obj events.MessageNewObject) {
 		log.Printf("[%d] %s", obj.Message.FromID, obj.Message.Text)
 		userName := b.getUserName(obj.Message.FromID)
-		user := handlers.User{Name: userName, Id: int64(obj.Message.PeerID), Net: "vk"}
+		user := producer.User{Name: userName, Id: int64(obj.Message.PeerID), Net: "vk"}
 		go user.Publish()
 
 		m := &formatter.HandlerMessage{
