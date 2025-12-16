@@ -23,7 +23,7 @@ func HandleMessage(m Message) {
 	log.Println("Start Message Handler", m)
 	c := config.LoadConfig()
 	var bot MessageSender
-
+	log.Println("Net", m.Network)
 	switch m.Network {
 	case "vk":
 		bot = vk.GetBot(c.Env["VK_BOT_TOKEN"])
