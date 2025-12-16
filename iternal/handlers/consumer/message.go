@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"log"
+
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/console"
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/tg"
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/vk"
@@ -18,6 +20,7 @@ type MessageSender interface {
 }
 
 func HandleMessage(m Message) {
+	log.Println("Start Message Handler", m)
 	c := config.LoadConfig()
 	var bot MessageSender
 
@@ -29,5 +32,7 @@ func HandleMessage(m Message) {
 	default:
 		bot = console.GetBot("MessageSender")
 	}
+	log.Println(bot)
+
 	bot.Publish(m.User, m.Message)
 }
