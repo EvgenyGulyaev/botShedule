@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	"github.com/nats-io/nats.go"
@@ -48,11 +47,11 @@ func Publish[T any](nc *nats.Conn, subject string, d T) error {
 
 func Subscribe[T any](nc *nats.Conn, subject string, bufferSize int, ctx context.Context) (<-chan T, context.CancelFunc, error) {
 	ch := make(chan T, bufferSize)
-	var once sync.Once // гарантирует вызов Unsubscribe только один раз
 
 	sub, err := nc.Subscribe(subject, func(msg *nats.Msg) {
 		var v T
 		if err := json.Unmarshal(msg.Data, &v); err != nil {
+			log.Printf("JSON parse error [%s]: %v", msg.Subject, err)
 			return
 		}
 		select {
@@ -66,15 +65,12 @@ func Subscribe[T any](nc *nats.Conn, subject string, bufferSize int, ctx context
 	}
 
 	cancel := func() {
-		once.Do(func() {
-			if sub != nil {
-				if err := sub.Unsubscribe(); err != nil {
-					log.Printf("unsubscribe %s failed: %v", subject, err)
-				}
+		if sub != nil {
+			if err := sub.Drain(); err != nil {
+				log.Printf("drain %s failed: %v", subject, err)
 			}
-			close(ch)
-		})
-		close(ch)
+		}
+		close(ch) // один раз
 	}
 
 	return ch, cancel, nil
