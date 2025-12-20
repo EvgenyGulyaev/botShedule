@@ -7,10 +7,11 @@ import (
 )
 
 type User struct {
-	Id   int64  `json:"id"`
-	Name string `json:"username"`
-	Net  string `json:"network"`
-	Text string `json:"text"`
+	Id    int64  `json:"id"`
+	Name  string `json:"username"`
+	Net   string `json:"network"`
+	Text  string `json:"text"`
+	MesId int    `json:"mes_id"`
 }
 
 func (u *User) Publish() bool {

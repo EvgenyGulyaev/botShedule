@@ -63,11 +63,13 @@ func (b *Bot) StartHandleMessage() {
 		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			user := producer.User{
-				Name: update.Message.From.UserName,
-				Id:   update.Message.Chat.ID,
-				Net:  "tg",
-				Text: update.Message.Text,
+				Name:  update.Message.From.UserName,
+				Id:    update.Message.Chat.ID,
+				Net:   "tg",
+				Text:  update.Message.Text,
+				MesId: update.Message.MessageID,
 			}
+
 			go user.Publish()
 
 			if b.isBlock(update.Message.Chat.ID) {
