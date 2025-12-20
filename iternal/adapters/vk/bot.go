@@ -14,8 +14,9 @@ import (
 
 // Структура бота
 type Bot struct {
-	bot *longpoll.LongPoll
-	api *api.VK
+	bot       *longpoll.LongPoll
+	api       *api.VK
+	blockUser map[int64]bool
 }
 
 func GetBot(botToken string) *Bot {
@@ -46,7 +47,10 @@ func initBot(botToken string) (*Bot, error) {
 
 func (b *Bot) StartHandleMessage() {
 	b.bot.MessageNew(func(ctx context.Context, obj events.MessageNewObject) {
-		log.Printf("[%d] %s", obj.Message.FromID, obj.Message.Text)
+		if b.isBlock(int64(obj.Message.PeerID)) {
+			return
+		}
+
 		userName := b.getUserName(obj.Message.FromID)
 		user := producer.User{Name: userName, Id: int64(obj.Message.PeerID), Net: "vk"}
 		go user.Publish()
@@ -77,4 +81,17 @@ func (b *Bot) Publish(chatID int64, message string) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func (b *Bot) Block(chatID int64) {
+	_, ok := b.blockUser[chatID]
+	if ok {
+		delete(b.blockUser, chatID)
+	}
+	b.blockUser[chatID] = true
+}
+
+func (b *Bot) isBlock(chatID int64) bool {
+	_, ok := b.blockUser[chatID]
+	return ok
 }

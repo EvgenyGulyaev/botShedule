@@ -7,20 +7,19 @@ import (
 	"github.com/EvgenyGulyaev/botShedule/iternal/config"
 )
 
-type Message struct {
-	User    int64  `json:"user"`
-	Message string `json:"message"`
-	Network string `json:"network"`
+type BlockUser struct {
+	User int64  `json:"user"`
+	Net  string `json:"net"`
 }
 
-type MessageSender interface {
-	Publish(chatID int64, message string)
+type MessageBlocker interface {
+	Block(chatID int64)
 }
 
-func HandleMessage(m Message) {
+func HandleBlockUser(m BlockUser) {
 	c := config.LoadConfig()
-	var bot MessageSender
-	switch m.Network {
+	var bot MessageBlocker
+	switch m.Net {
 	case "vk":
 		bot = vk.GetBot(c.Env["VK_BOT_TOKEN"])
 	case "tg":
@@ -29,5 +28,5 @@ func HandleMessage(m Message) {
 		bot = console.GetBot("MessageSender")
 	}
 
-	bot.Publish(m.User, m.Message)
+	bot.Block(m.User)
 }

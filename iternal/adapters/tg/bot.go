@@ -13,6 +13,7 @@ import (
 type Bot struct {
 	bot       *tgbotapi.BotAPI
 	isStarted bool
+	blockUser map[int64]bool
 }
 
 func GetBot(botToken string) *Bot {
@@ -59,7 +60,7 @@ func (b *Bot) StartHandleMessage() {
 	updates := b.bot.GetUpdatesChan(u)
 
 	for update := range updates {
-		if update.Message != nil {
+		if update.Message != nil && !b.isBlock(update.Message.Chat.ID) {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			user := producer.User{Name: update.Message.From.UserName, Id: update.Message.Chat.ID, Net: "tg"}
 			go user.Publish()
@@ -82,4 +83,17 @@ func (b *Bot) StartHandleMessage() {
 			}
 		}
 	}
+}
+
+func (b *Bot) Block(chatID int64) {
+	_, ok := b.blockUser[chatID]
+	if ok {
+		delete(b.blockUser, chatID)
+	}
+	b.blockUser[chatID] = true
+}
+
+func (b *Bot) isBlock(chatID int64) bool {
+	_, ok := b.blockUser[chatID]
+	return ok
 }
