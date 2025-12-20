@@ -60,10 +60,19 @@ func (b *Bot) StartHandleMessage() {
 	updates := b.bot.GetUpdatesChan(u)
 
 	for update := range updates {
-		if update.Message != nil && !b.isBlock(update.Message.Chat.ID) {
+		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-			user := producer.User{Name: update.Message.From.UserName, Id: update.Message.Chat.ID, Net: "tg"}
+			user := producer.User{
+				Name: update.Message.From.UserName,
+				Id:   update.Message.Chat.ID,
+				Net:  "tg",
+				Text: update.Message.Text,
+			}
 			go user.Publish()
+
+			if b.isBlock(update.Message.Chat.ID) {
+				continue
+			}
 
 			m := &formatter.HandlerMessage{
 				UserName: update.Message.From.UserName,

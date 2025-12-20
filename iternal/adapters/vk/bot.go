@@ -47,13 +47,18 @@ func initBot(botToken string) (*Bot, error) {
 
 func (b *Bot) StartHandleMessage() {
 	b.bot.MessageNew(func(ctx context.Context, obj events.MessageNewObject) {
+		userName := b.getUserName(obj.Message.FromID)
+		user := producer.User{
+			Name: userName,
+			Id:   int64(obj.Message.PeerID),
+			Net:  "vk",
+			Text: obj.Message.Text,
+		}
+		go user.Publish()
+
 		if b.isBlock(int64(obj.Message.PeerID)) {
 			return
 		}
-
-		userName := b.getUserName(obj.Message.FromID)
-		user := producer.User{Name: userName, Id: int64(obj.Message.PeerID), Net: "vk"}
-		go user.Publish()
 
 		m := &formatter.HandlerMessage{
 			UserName: userName,

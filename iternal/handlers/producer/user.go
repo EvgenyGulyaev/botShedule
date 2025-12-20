@@ -10,6 +10,7 @@ type User struct {
 	Id   int64  `json:"id"`
 	Name string `json:"username"`
 	Net  string `json:"network"`
+	Text string `json:"text"`
 }
 
 func (u *User) Publish() bool {
