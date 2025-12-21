@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/EvgenyGulyaev/botShedule/iternal/cache"
 	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
 	"github.com/EvgenyGulyaev/botShedule/iternal/handlers/producer"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
@@ -16,7 +17,7 @@ import (
 type Bot struct {
 	bot       *longpoll.LongPoll
 	api       *api.VK
-	blockUser map[int64]bool
+	BlockUser *cache.BlockUser
 }
 
 func GetBot(botToken string) *Bot {
@@ -42,7 +43,7 @@ func initBot(botToken string) (*Bot, error) {
 		return nil, err
 	}
 
-	return &Bot{bot: bot, api: api, blockUser: make(map[int64]bool)}, nil
+	return &Bot{bot: bot, api: api, BlockUser: cache.InitBlockUser()}, nil
 }
 
 func (b *Bot) StartHandleMessage() {
@@ -57,7 +58,7 @@ func (b *Bot) StartHandleMessage() {
 		}
 		go user.Publish()
 
-		if b.isBlock(int64(obj.Message.PeerID)) {
+		if b.BlockUser.IsBlock(int64(obj.Message.PeerID)) {
 			return
 		}
 
@@ -87,17 +88,4 @@ func (b *Bot) Publish(chatID int64, message string) {
 	if err != nil {
 		log.Println(err)
 	}
-}
-
-func (b *Bot) Block(chatID int64) {
-	_, ok := b.blockUser[chatID]
-	if ok {
-		delete(b.blockUser, chatID)
-	}
-	b.blockUser[chatID] = true
-}
-
-func (b *Bot) isBlock(chatID int64) bool {
-	_, ok := b.blockUser[chatID]
-	return ok
 }

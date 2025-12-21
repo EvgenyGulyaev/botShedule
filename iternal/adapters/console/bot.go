@@ -1,6 +1,7 @@
 package console
 
 import (
+	"github.com/EvgenyGulyaev/botShedule/iternal/cache"
 	"github.com/EvgenyGulyaev/botShedule/pkg/logger"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 )
@@ -8,32 +9,19 @@ import (
 type Bot struct {
 	log       *logger.Logger
 	name      string
-	blockUser map[int64]bool
+	BlockUser *cache.BlockUser
 }
 
 func GetBot(name string) *Bot {
 	return singleton.GetInstance("bot-console", func() interface{} {
-		bot := &Bot{log: logger.GetLogger(), name: name, blockUser: make(map[int64]bool)}
+		bot := &Bot{log: logger.GetLogger(), name: name, BlockUser: cache.InitBlockUser()}
 		return bot
 	}).(*Bot)
 }
 
 func (b *Bot) Publish(chatID int64, message string) {
-	if b.isBlock(chatID) {
+	if b.BlockUser.IsBlock(chatID) {
 		return
 	}
 	b.log.Printf("[%s]%d - %s", b.name, chatID, message)
-}
-
-func (b *Bot) Block(chatID int64) {
-	_, ok := b.blockUser[chatID]
-	if ok {
-		delete(b.blockUser, chatID)
-	}
-	b.blockUser[chatID] = true
-}
-
-func (b *Bot) isBlock(chatID int64) bool {
-	_, ok := b.blockUser[chatID]
-	return ok
 }

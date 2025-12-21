@@ -1,8 +1,6 @@
 package consumer
 
 import (
-	"log"
-
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/console"
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/tg"
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/vk"
@@ -23,13 +21,12 @@ func HandleBlockUser(m BlockUser) {
 	var bot MessageBlocker
 	switch m.Net {
 	case "vk":
-		bot = vk.GetBot(c.Env["VK_BOT_TOKEN"])
+		bot = vk.GetBot(c.Env["VK_BOT_TOKEN"]).BlockUser
 	case "tg":
-		bot = tg.GetBot(c.Env["TG_BOT_TOKEN"])
+		bot = tg.GetBot(c.Env["TG_BOT_TOKEN"]).BlockUser
 	default:
-		bot = console.GetBot("MessageSender")
+		bot = console.GetBot("MessageSender").BlockUser
 	}
-	log.Println(m.Net, bot)
 
 	bot.Block(m.User)
 }

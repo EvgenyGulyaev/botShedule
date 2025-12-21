@@ -3,6 +3,7 @@ package tg
 import (
 	"log"
 
+	"github.com/EvgenyGulyaev/botShedule/iternal/cache"
 	"github.com/EvgenyGulyaev/botShedule/iternal/formatter"
 	"github.com/EvgenyGulyaev/botShedule/iternal/handlers/producer"
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
@@ -13,7 +14,7 @@ import (
 type Bot struct {
 	bot       *tgbotapi.BotAPI
 	isStarted bool
-	blockUser map[int64]bool
+	BlockUser *cache.BlockUser
 }
 
 func GetBot(botToken string) *Bot {
@@ -36,7 +37,7 @@ func initBot(botToken string) (*Bot, error) {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	b := &Bot{bot: bot, blockUser: make(map[int64]bool)}
+	b := &Bot{bot: bot, BlockUser: cache.InitBlockUser()}
 	return b, nil
 }
 
@@ -72,7 +73,7 @@ func (b *Bot) StartHandleMessage() {
 
 			go user.Publish()
 
-			if b.isBlock(update.Message.Chat.ID) {
+			if b.BlockUser.IsBlock(update.Message.Chat.ID) {
 				continue
 			}
 
@@ -94,18 +95,4 @@ func (b *Bot) StartHandleMessage() {
 			}
 		}
 	}
-}
-
-func (b *Bot) Block(chatID int64) {
-	_, ok := b.blockUser[chatID]
-	if ok {
-		delete(b.blockUser, chatID)
-		return
-	}
-	b.blockUser[chatID] = true
-}
-
-func (b *Bot) isBlock(chatID int64) bool {
-	_, ok := b.blockUser[chatID]
-	return ok
 }
