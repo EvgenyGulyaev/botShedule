@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"log"
+
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/console"
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/tg"
 	"github.com/EvgenyGulyaev/botShedule/iternal/adapters/vk"
@@ -27,6 +29,7 @@ func HandleBlockUser(m BlockUser) {
 	default:
 		bot = console.GetBot("MessageSender")
 	}
+	log.Println(m.Net, bot)
 
 	bot.Block(m.User)
 }
