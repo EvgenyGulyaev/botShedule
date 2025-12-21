@@ -100,6 +100,7 @@ func (b *Bot) Block(chatID int64) {
 	_, ok := b.blockUser[chatID]
 	if ok {
 		delete(b.blockUser, chatID)
+		return
 	}
 	b.blockUser[chatID] = true
 }
