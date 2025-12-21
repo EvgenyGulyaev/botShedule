@@ -4,7 +4,7 @@ import "sync"
 
 type BlockUser struct {
 	data map[int64]bool
-	mu   sync.Mutex
+	mu   sync.RWMutex
 }
 
 func InitBlockUser() *BlockUser {
@@ -12,17 +12,18 @@ func InitBlockUser() *BlockUser {
 }
 
 func (b *BlockUser) Block(chatID int64) {
-	_, ok := b.data[chatID]
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if ok {
+
+	if b.data[chatID] {
 		delete(b.data, chatID)
-		return
+	} else {
+		b.data[chatID] = true
 	}
-	b.data[chatID] = true
 }
 
 func (b *BlockUser) IsBlock(chatID int64) bool {
-	_, ok := b.data[chatID]
-	return ok
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.data[chatID]
 }
