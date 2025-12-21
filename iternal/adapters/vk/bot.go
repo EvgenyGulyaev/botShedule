@@ -42,7 +42,7 @@ func initBot(botToken string) (*Bot, error) {
 		return nil, err
 	}
 
-	return &Bot{bot: bot, api: api}, nil
+	return &Bot{bot: bot, api: api, blockUser: make(map[int64]bool)}, nil
 }
 
 func (b *Bot) StartHandleMessage() {

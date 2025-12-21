@@ -36,7 +36,7 @@ func initBot(botToken string) (*Bot, error) {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	b := &Bot{bot: bot}
+	b := &Bot{bot: bot, blockUser: make(map[int64]bool)}
 	return b, nil
 }
 

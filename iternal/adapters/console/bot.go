@@ -13,7 +13,7 @@ type Bot struct {
 
 func GetBot(name string) *Bot {
 	return singleton.GetInstance("bot-console", func() interface{} {
-		bot := &Bot{log: logger.GetLogger(), name: name}
+		bot := &Bot{log: logger.GetLogger(), name: name, blockUser: make(map[int64]bool)}
 		return bot
 	}).(*Bot)
 }
