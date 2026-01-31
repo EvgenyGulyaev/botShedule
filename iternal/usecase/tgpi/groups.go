@@ -57,7 +57,7 @@ func (t *Client) getReqGroup() (req *http.Request, err error) {
 			"teacher",
 			"group",
 		},
-		Year: time.Now().Year(),
+		Year: getYear(),
 	}
 
 	var buf bytes.Buffer
@@ -83,6 +83,16 @@ func (t *Client) getReqGroup() (req *http.Request, err error) {
 	req.Header.Set("Accept-Encoding", "identity")
 
 	return
+}
+
+func getYear() int {
+	year := time.Now().Year()
+	if time.Now().Month() < 9 {
+		year = year - 1
+		return year
+	}
+
+	return year
 }
 
 func getReader(resp *http.Response) (reader io.ReadCloser) {
