@@ -87,7 +87,7 @@ func (t *Client) getReqGroup() (req *http.Request, err error) {
 
 func getYear() int {
 	year := time.Now().Year()
-	if time.Now().Month() < 9 {
+	if time.Now().Month() < 8 {
 		year = year - 1
 		return year
 	}
