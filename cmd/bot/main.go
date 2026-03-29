@@ -14,10 +14,10 @@ func main() {
 	// Запускаем брокер для сообщений из вне
 	handlers.RunBroker()
 
-	botTg := tg.GetBot(c.Env["TG_BOT_TOKEN"])
-	go botTg.StartHandleMessage()
-
 	botVk := vk.GetBot(c.Env["VK_BOT_TOKEN"])
-	botVk.StartHandleMessage()
+	go botVk.StartHandleMessage()
+
+	botTg := tg.GetBot(c.Env["TG_BOT_TOKEN"])
+	botTg.StartHandleMessage()
 
 }
