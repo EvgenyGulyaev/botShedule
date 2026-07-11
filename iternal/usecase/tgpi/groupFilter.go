@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 )
 
 type TypeEl string
@@ -32,33 +31,18 @@ const (
 	Aud     TypeEl = "aud"
 )
 
-func filterEl(mask string, el El, sem chan struct{}, wg *sync.WaitGroup, mu *sync.Mutex, results *[]El) {
-	defer wg.Done()
-	defer func() { <-sem }()
-	mu.Lock()
-	if strings.Contains(strings.ToLower(el.Name), strings.ToLower(mask)) {
-		*results = append(*results, el)
-	}
-	mu.Unlock()
-}
-
 func filterGroups(groupName string, els []El) []El {
 	if groupName == "" {
 		return els
 	}
 
-	var results []El
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	sem := make(chan struct{}, 5) // максимум 5 горутин одновременно
-
-	for _, item := range els {
-		sem <- struct{}{}
-		wg.Add(1)
-		go filterEl(groupName, item, sem, &wg, &mu, &results)
+	mask := strings.ToLower(groupName)
+	results := make([]El, 0)
+	for _, el := range els {
+		if strings.Contains(strings.ToLower(el.Name), mask) {
+			results = append(results, el)
+		}
 	}
-
-	wg.Wait()
 	return results
 }
 
