@@ -17,9 +17,9 @@ type Client struct {
 	client *http.Client
 	url    string
 
-	groupsMu       sync.Mutex
-	groups         []El
-	groupsLoadedAt time.Time
+	groupsMu        sync.Mutex
+	groups          []El
+	groupsCheckedAt time.Time
 }
 
 const groupsCacheTTL = time.Hour
@@ -46,16 +46,19 @@ func (t *Client) cachedGroups() []El {
 	t.groupsMu.Lock()
 	defer t.groupsMu.Unlock()
 
-	if !t.groupsLoadedAt.IsZero() && time.Since(t.groupsLoadedAt) < groupsCacheTTL {
+	if !t.groupsCheckedAt.IsZero() && time.Since(t.groupsCheckedAt) < groupsCacheTTL {
 		return t.groups
 	}
 
 	groups, err := t.fetchGroups()
 	if err != nil {
+		if !t.groupsCheckedAt.IsZero() {
+			t.groupsCheckedAt = time.Now()
+		}
 		return t.groups
 	}
 	t.groups = groups
-	t.groupsLoadedAt = time.Now()
+	t.groupsCheckedAt = time.Now()
 	return t.groups
 }
 

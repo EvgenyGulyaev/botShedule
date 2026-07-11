@@ -40,7 +40,7 @@ func TestGetGroupsRefreshesExpiredCache(t *testing.T) {
 	client := &Client{client: server.Client(), url: server.URL}
 
 	client.GetGroups("")
-	client.groupsLoadedAt = time.Now().Add(-groupsCacheTTL)
+	client.groupsCheckedAt = time.Now().Add(-groupsCacheTTL)
 	client.GetGroups("")
 
 	if got := requests.Load(); got != 2 {
@@ -87,10 +87,43 @@ func TestGetGroupsUsesStaleCacheWhenRefreshFails(t *testing.T) {
 
 	want := client.GetGroups("")
 	fail.Store(true)
-	client.groupsLoadedAt = time.Now().Add(-groupsCacheTTL)
+	client.groupsCheckedAt = time.Now().Add(-groupsCacheTTL)
 	got := client.GetGroups("")
 
 	if len(got) != len(want) || len(got) != 1 || got[0] != want[0] {
 		t.Fatalf("stale result = %#v, want %#v", got, want)
+	}
+}
+
+func TestGetGroupsCoalescesConcurrentFailedRefresh(t *testing.T) {
+	var requests atomic.Int32
+	var fail atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		if fail.Load() {
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		fmt.Fprint(w, groupsJSON)
+	}))
+	defer server.Close()
+	client := &Client{client: server.Client(), url: server.URL}
+
+	client.GetGroups("")
+	fail.Store(true)
+	client.groupsCheckedAt = time.Now().Add(-groupsCacheTTL)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			client.GetGroups("")
+		}()
+	}
+	wg.Wait()
+
+	if got := requests.Load(); got != 2 {
+		t.Fatalf("requests = %d, want 2 (initial load plus one failed refresh)", got)
 	}
 }

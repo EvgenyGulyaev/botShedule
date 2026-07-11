@@ -180,9 +180,9 @@ type Client struct {
 	client *http.Client
 	url    string
 
-	groupsMu       sync.Mutex
-	groups         []El
-	groupsLoadedAt time.Time
+	groupsMu        sync.Mutex
+	groups          []El
+	groupsCheckedAt time.Time
 }
 ```
 
@@ -197,16 +197,19 @@ func (t *Client) cachedGroups() []El {
 	t.groupsMu.Lock()
 	defer t.groupsMu.Unlock()
 
-	if !t.groupsLoadedAt.IsZero() && time.Since(t.groupsLoadedAt) < groupsCacheTTL {
+	if !t.groupsCheckedAt.IsZero() && time.Since(t.groupsCheckedAt) < groupsCacheTTL {
 		return t.groups
 	}
 
 	groups, err := t.fetchGroups()
 	if err != nil {
+		if !t.groupsCheckedAt.IsZero() {
+			t.groupsCheckedAt = time.Now()
+		}
 		return t.groups
 	}
 	t.groups = groups
-	t.groupsLoadedAt = time.Now()
+	t.groupsCheckedAt = time.Now()
 	return t.groups
 }
 
@@ -272,7 +275,7 @@ Run: `go test ./iternal/usecase/tgpi -run TestGetGroupsCachesSuccessfulResponse 
 
 Expected: PASS.
 
-- [ ] **Step 5: Add expiry, concurrent-refresh, and stale-fallback tests**
+- [ ] **Step 5: Add expiry, concurrent-refresh, stale-fallback, and failed-refresh coalescing tests**
 
 Append to `groups_test.go`:
 
@@ -287,7 +290,7 @@ func TestGetGroupsRefreshesExpiredCache(t *testing.T) {
 	client := &Client{client: server.Client(), url: server.URL}
 
 	client.GetGroups("")
-	client.groupsLoadedAt = time.Now().Add(-groupsCacheTTL)
+	client.groupsCheckedAt = time.Now().Add(-groupsCacheTTL)
 	client.GetGroups("")
 
 	if got := requests.Load(); got != 2 {
@@ -334,11 +337,44 @@ func TestGetGroupsUsesStaleCacheWhenRefreshFails(t *testing.T) {
 
 	want := client.GetGroups("")
 	fail.Store(true)
-	client.groupsLoadedAt = time.Now().Add(-groupsCacheTTL)
+	client.groupsCheckedAt = time.Now().Add(-groupsCacheTTL)
 	got := client.GetGroups("")
 
 	if len(got) != len(want) || len(got) != 1 || got[0] != want[0] {
 		t.Fatalf("stale result = %#v, want %#v", got, want)
+	}
+}
+
+func TestGetGroupsCoalescesConcurrentFailedRefresh(t *testing.T) {
+	var requests atomic.Int32
+	var fail atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		if fail.Load() {
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		fmt.Fprint(w, groupsJSON)
+	}))
+	defer server.Close()
+	client := &Client{client: server.Client(), url: server.URL}
+
+	client.GetGroups("")
+	fail.Store(true)
+	client.groupsCheckedAt = time.Now().Add(-groupsCacheTTL)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			client.GetGroups("")
+		}()
+	}
+	wg.Wait()
+
+	if got := requests.Load(); got != 2 {
+		t.Fatalf("requests = %d, want 2 (initial load plus one failed refresh)", got)
 	}
 }
 ```
@@ -347,7 +383,7 @@ func TestGetGroupsUsesStaleCacheWhenRefreshFails(t *testing.T) {
 
 Run: `go test -race ./iternal/usecase/tgpi -run 'TestGetGroups' -count=10`
 
-Expected: PASS with no race reports and exactly one refresh in the concurrent test.
+Expected: PASS with no race reports and exactly one refresh attempt in each concurrent test, including upstream failure.
 
 ---
 
