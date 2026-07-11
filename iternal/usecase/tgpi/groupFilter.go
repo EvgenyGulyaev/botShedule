@@ -2,7 +2,6 @@ package tgpi
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -59,15 +58,13 @@ func convert(t *[]ElTeacher) (elements []El) {
 	return
 }
 
-func getGroups(bodyBytes []byte) (elements []El) {
+func getGroups(bodyBytes []byte) ([]El, error) {
 	var elGroup elementGroup
-	err := json.Unmarshal(bodyBytes, &elGroup)
-	if err != nil {
-		fmt.Print(err)
-		return
+	if err := json.Unmarshal(bodyBytes, &elGroup); err != nil {
+		return nil, err
 	}
 	teachers := convert(&elGroup.Teacher)
 	setType(&elGroup.Group, Group)
 	setType(&elGroup.Aud, Aud)
-	return append(elGroup.Group, append(elGroup.Aud, teachers...)...)
+	return append(elGroup.Group, append(elGroup.Aud, teachers...)...), nil
 }

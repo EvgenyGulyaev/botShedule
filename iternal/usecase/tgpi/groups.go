@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
@@ -14,7 +16,13 @@ import (
 type Client struct {
 	client *http.Client
 	url    string
+
+	groupsMu       sync.Mutex
+	groups         []El
+	groupsLoadedAt time.Time
 }
+
+const groupsCacheTTL = time.Hour
 
 type Params struct {
 	Query []string `json:"query"`
@@ -30,24 +38,54 @@ func InitClientGroup() *Client {
 	}).(*Client)
 }
 
-func (t *Client) GetGroups(groupName string) (result []El) {
+func (t *Client) GetGroups(groupName string) []El {
+	return filterGroups(groupName, t.cachedGroups())
+}
+
+func (t *Client) cachedGroups() []El {
+	t.groupsMu.Lock()
+	defer t.groupsMu.Unlock()
+
+	if !t.groupsLoadedAt.IsZero() && time.Since(t.groupsLoadedAt) < groupsCacheTTL {
+		return t.groups
+	}
+
+	groups, err := t.fetchGroups()
+	if err != nil {
+		return t.groups
+	}
+	t.groups = groups
+	t.groupsLoadedAt = time.Now()
+	return t.groups
+}
+
+func (t *Client) fetchGroups() ([]El, error) {
 	req, err := t.getReqGroup()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	resp, err := t.client.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("TGPI groups: unexpected HTTP status %s", resp.Status)
+	}
 
-	reader := getReader(resp)
+	reader, err := getReader(resp)
+	if err != nil {
+		return nil, err
+	}
+	if reader != resp.Body {
+		defer reader.Close()
+	}
 	bodyBytes, err := io.ReadAll(reader)
 	if err != nil {
-		return
+		return nil, err
 	}
-	return filterGroups(groupName, getGroups(bodyBytes))
+	return getGroups(bodyBytes)
 }
 
 func (t *Client) getReqGroup() (req *http.Request, err error) {
@@ -95,16 +133,9 @@ func getYear() int {
 	return year
 }
 
-func getReader(resp *http.Response) (reader io.ReadCloser) {
-	switch resp.Header.Get("Content-Encoding") {
-	case "gzip":
-		reader, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-		defer reader.Close()
-	default:
-		reader = resp.Body
+func getReader(resp *http.Response) (io.ReadCloser, error) {
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		return gzip.NewReader(resp.Body)
 	}
-	return
+	return resp.Body, nil
 }
