@@ -18,6 +18,7 @@ type Bot struct {
 	bot       *longpoll.LongPoll
 	api       *api.VK
 	BlockUser *cache.BlockUser
+	users     userNameCache
 }
 
 func GetBot(botToken string) *Bot {
