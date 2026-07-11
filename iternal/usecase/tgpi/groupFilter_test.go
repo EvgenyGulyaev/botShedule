@@ -3,6 +3,7 @@ package tgpi
 import (
 	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -25,10 +26,31 @@ func TestFilterGroupsPreservesOrder(t *testing.T) {
 	}
 }
 
+func TestGetGroupsPrecomputesSearchNames(t *testing.T) {
+	body := []byte(`{
+		"aud":[{"id":1,"title":"АУД-1"}],
+		"teacher":[{"id":2,"name":"ИВАНОВ"}],
+		"group":[{"id":3,"title":"ИВТ-1"}]
+	}`)
+
+	items, err := getGroups(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{"ивт-1", "ауд-1", "иванов"}
+	for i := range want {
+		if items[i].searchName != want[i] {
+			t.Fatalf("item %d searchName = %q, want %q", i, items[i].searchName, want[i])
+		}
+	}
+}
+
 func BenchmarkFilterGroups(b *testing.B) {
 	items := make([]El, 1000)
 	for i := range items {
-		items[i] = El{ID: i, Name: fmt.Sprintf("Группа %d", i)}
+		name := fmt.Sprintf("Группа %d", i)
+		items[i] = El{ID: i, Name: name, searchName: strings.ToLower(name)}
 	}
 	b.ReportAllocs()
 	b.ResetTimer()

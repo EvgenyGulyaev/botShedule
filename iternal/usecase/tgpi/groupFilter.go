@@ -11,6 +11,8 @@ type El struct {
 	ID   int    `json:"id"`
 	Name string `json:"title"`
 	Type TypeEl
+
+	searchName string
 }
 
 type ElTeacher struct {
@@ -38,7 +40,11 @@ func filterGroups(groupName string, els []El) []El {
 	mask := strings.ToLower(groupName)
 	results := make([]El, 0)
 	for _, el := range els {
-		if strings.Contains(strings.ToLower(el.Name), mask) {
+		name := el.searchName
+		if name == "" {
+			name = strings.ToLower(el.Name)
+		}
+		if strings.Contains(name, mask) {
 			results = append(results, el)
 		}
 	}
@@ -48,12 +54,18 @@ func filterGroups(groupName string, els []El) []El {
 func setType(els *[]El, gt TypeEl) {
 	for i := range *els {
 		(*els)[i].Type = gt
+		(*els)[i].searchName = strings.ToLower((*els)[i].Name)
 	}
 }
 
 func convert(t *[]ElTeacher) (elements []El) {
 	for _, v := range *t {
-		elements = append(elements, El{ID: v.ID, Name: v.Name, Type: Teacher})
+		elements = append(elements, El{
+			ID:         v.ID,
+			Name:       v.Name,
+			Type:       Teacher,
+			searchName: strings.ToLower(v.Name),
+		})
 	}
 	return
 }
