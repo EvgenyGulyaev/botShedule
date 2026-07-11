@@ -22,9 +22,8 @@ type HandlerMessage struct {
 }
 
 func (m *HandlerMessage) GetAnswer() (string, []string) {
-	c := m.HandlerCommand()
-	if m.HandlerCommand() != "" {
-		return c, nil
+	if command := m.HandlerCommand(); command != "" {
+		return command, nil
 	}
 
 	tgpi := tgpi.InitClientGroup()
