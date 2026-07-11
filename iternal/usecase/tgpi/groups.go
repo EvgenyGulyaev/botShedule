@@ -32,7 +32,7 @@ type Params struct {
 func InitClientGroup() *Client {
 	return singleton.GetInstance("client-group", func() interface{} {
 		return &Client{
-			client: &http.Client{Timeout: 1000 * time.Second},
+			client: &http.Client{Timeout: 15 * time.Second},
 			url:    "https://edu.tgpi.ru/query/",
 		}
 	}).(*Client)

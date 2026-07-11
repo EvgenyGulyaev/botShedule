@@ -56,7 +56,7 @@ func (b *Bot) StartHandleMessage() {
 			Text:  obj.Message.Text,
 			MesId: obj.Message.ID,
 		}
-		go user.Publish()
+		user.Publish()
 
 		if b.BlockUser.IsBlock(int64(obj.Message.PeerID)) {
 			return
