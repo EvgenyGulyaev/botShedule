@@ -2,6 +2,7 @@ package tgpi
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -39,13 +40,15 @@ type preload struct {
 	} `json:"schedule"`
 }
 
-func getSchedule(doc *goquery.Document) (result []Schedule) {
+func getSchedule(doc *goquery.Document) (result []Schedule, err error) {
 	d := doc.Find("body script").Eq(0).Text()
-	data := d[15 : len(d)-18]
+	const prefix, suffix = 15, 18
+	if len(d) < prefix+suffix {
+		return nil, fmt.Errorf("invalid schedule payload: script is too short")
+	}
 	var s preload
-	err := json.Unmarshal([]byte(data), &s)
-	if err != nil {
-		return
+	if err = json.Unmarshal([]byte(d[prefix:len(d)-suffix]), &s); err != nil {
+		return nil, err
 	}
 
 	for _, day := range s.Schedule.Day {
@@ -72,5 +75,5 @@ func getSchedule(doc *goquery.Document) (result []Schedule) {
 		result = append(result, Schedule{Day: date, Lessons: lessons})
 	}
 
-	return
+	return result, nil
 }

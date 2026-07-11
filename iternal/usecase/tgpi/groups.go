@@ -20,6 +20,7 @@ type Client struct {
 	groupsMu        sync.Mutex
 	groups          []El
 	groupsCheckedAt time.Time
+	schedules       scheduleCache
 }
 
 const groupsCacheTTL = time.Hour
