@@ -18,6 +18,9 @@
 go.work
 go.work.mod
 
+# Local isolated development worktrees
+.worktrees/
+
 # IDE/editor specific files
 .vscode/
 .idea/
