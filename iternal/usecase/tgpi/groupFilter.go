@@ -2,9 +2,7 @@ package tgpi
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
-	"sync"
 )
 
 type TypeEl string
@@ -32,33 +30,18 @@ const (
 	Aud     TypeEl = "aud"
 )
 
-func filterEl(mask string, el El, sem chan struct{}, wg *sync.WaitGroup, mu *sync.Mutex, results *[]El) {
-	defer wg.Done()
-	defer func() { <-sem }()
-	mu.Lock()
-	if strings.Contains(strings.ToLower(el.Name), strings.ToLower(mask)) {
-		*results = append(*results, el)
-	}
-	mu.Unlock()
-}
-
 func filterGroups(groupName string, els []El) []El {
 	if groupName == "" {
 		return els
 	}
 
-	var results []El
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	sem := make(chan struct{}, 5) // максимум 5 горутин одновременно
-
-	for _, item := range els {
-		sem <- struct{}{}
-		wg.Add(1)
-		go filterEl(groupName, item, sem, &wg, &mu, &results)
+	mask := strings.ToLower(groupName)
+	results := make([]El, 0)
+	for _, el := range els {
+		if strings.Contains(strings.ToLower(el.Name), mask) {
+			results = append(results, el)
+		}
 	}
-
-	wg.Wait()
 	return results
 }
 
@@ -75,15 +58,13 @@ func convert(t *[]ElTeacher) (elements []El) {
 	return
 }
 
-func getGroups(bodyBytes []byte) (elements []El) {
-	var elGroup elementGroup
-	err := json.Unmarshal(bodyBytes, &elGroup)
-	if err != nil {
-		fmt.Print(err)
-		return
+func getGroups(body []byte) ([]El, error) {
+	var group elementGroup
+	if err := json.Unmarshal(body, &group); err != nil {
+		return nil, err
 	}
-	teachers := convert(&elGroup.Teacher)
-	setType(&elGroup.Group, Group)
-	setType(&elGroup.Aud, Aud)
-	return append(elGroup.Group, append(elGroup.Aud, teachers...)...)
+	teachers := convert(&group.Teacher)
+	setType(&group.Group, Group)
+	setType(&group.Aud, Aud)
+	return append(group.Group, append(group.Aud, teachers...)...), nil
 }
