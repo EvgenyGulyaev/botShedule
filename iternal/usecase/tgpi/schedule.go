@@ -3,7 +3,6 @@ package tgpi
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 	"github.com/PuerkitoBio/goquery"
@@ -12,7 +11,7 @@ import (
 func InitClientSchedule() *Client {
 	return singleton.GetInstance("client-schedule", func() interface{} {
 		return &Client{
-			client: &http.Client{Timeout: 1000 * time.Second},
+			client: &http.Client{Timeout: tgpiHTTPTimeout},
 			url:    "https://edu.tgpi.ru/schedule/",
 		}
 	}).(*Client)
@@ -29,6 +28,9 @@ func (t *Client) GetSchedule(el *El) (result []Schedule) {
 		return
 	}
 	defer res.Body.Close()
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		return
+	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {

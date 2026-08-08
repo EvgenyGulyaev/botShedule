@@ -13,7 +13,10 @@ import (
 	"github.com/EvgenyGulyaev/botShedule/pkg/singleton"
 )
 
-const groupsCacheTTL = time.Hour
+const (
+	groupsCacheTTL  = time.Hour
+	tgpiHTTPTimeout = 30 * time.Second
+)
 
 type Client struct {
 	client *http.Client
@@ -32,7 +35,7 @@ type Params struct {
 func InitClientGroup() *Client {
 	return singleton.GetInstance("client-group", func() interface{} {
 		return &Client{
-			client: &http.Client{Timeout: 1000 * time.Second},
+			client: &http.Client{Timeout: tgpiHTTPTimeout},
 			url:    "https://edu.tgpi.ru/query/",
 		}
 	}).(*Client)

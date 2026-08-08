@@ -5,10 +5,7 @@ import (
 	"strings"
 )
 
-type Start struct {
-}
-
-func (m *Start) Execute(uname string) string {
+func Start(uname string) string {
 	res := []string{
 		fmt.Sprintf("Привет %s!✋", uname),
 		"Я бот расписание, вот немного информации о том , что я умею!",

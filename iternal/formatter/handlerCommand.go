@@ -6,7 +6,7 @@ import (
 
 func (m *HandlerMessage) HandlerCommand() string {
 	if m.From == "/start" {
-		return command.Exec(&command.Start{}, m.UserName)
+		return command.Start(m.UserName)
 	}
 	return ""
 }

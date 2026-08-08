@@ -33,8 +33,6 @@ func initBot(botToken string) (*Bot, error) {
 		return nil, err
 	}
 
-	bot.Debug = true
-
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	b := &Bot{bot: bot, BlockUser: cache.InitBlockUser()}
@@ -71,7 +69,7 @@ func (b *Bot) StartHandleMessage() {
 				MesId: update.Message.MessageID,
 			}
 
-			go user.Publish()
+			user.Publish()
 
 			if b.BlockUser.IsBlock(update.Message.Chat.ID) {
 				continue

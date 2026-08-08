@@ -10,8 +10,7 @@ import (
 )
 
 type Config struct {
-	IsLoaded bool
-	Env      map[string]string
+	Env map[string]string
 }
 
 func LoadConfig() *Config {
@@ -36,5 +35,5 @@ func load() *Config {
 	if err != nil {
 		log.Fatal("Error cannot read .env file")
 	}
-	return &Config{IsLoaded: true, Env: env}
+	return &Config{Env: env}
 }
